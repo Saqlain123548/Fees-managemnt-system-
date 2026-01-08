@@ -12,11 +12,11 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
-export default function LoginPage() {
+export default function SignupPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Login logic here
-    console.log("Login submitted");
+    // Signup logic here (e.g., API call to register user)
+    console.log("Signup submitted");
   };
 
   return (
@@ -28,14 +28,27 @@ export default function LoginPage() {
 
       <Card className="w-full max-w-md z-10 shadow-xl">
         <CardHeader className="space-y-3 text-center pb-8">
-          <CardTitle className="text-3xl font-bold">Login</CardTitle>
+          <CardTitle className="text-3xl font-bold">Sign Up</CardTitle>
           <CardDescription className="text-base">
-            Enter your credentials to access the Fees Collection System
+            Create a new admin account for the Fees Collection System
           </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-6">
           <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="name" className="text-base">
+                Full Name
+              </Label>
+              <Input
+                id="name"
+                type="text"
+                placeholder="John Doe"
+                required
+                className="h-12 text-base"
+              />
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="email" className="text-base">
                 Email
@@ -56,7 +69,20 @@ export default function LoginPage() {
               <Input
                 id="password"
                 type="password"
-                placeholder="Enter your password"
+                placeholder="Create a strong password"
+                required
+                className="h-12 text-base"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="confirm" className="text-base">
+                Confirm Password
+              </Label>
+              <Input
+                id="confirm"
+                type="password"
+                placeholder="Repeat your password"
                 required
                 className="h-12 text-base"
               />
@@ -66,26 +92,22 @@ export default function LoginPage() {
               type="submit"
               className="w-full h-12 text-base font-medium bg-indigo-600 hover:bg-indigo-700"
             >
-              Login
+              Sign Up
             </Button>
           </form>
 
           <div className="text-center text-sm">
             <span className="text-muted-foreground">
-              Don't have an account?{" "}
+              Already have an account?{" "}
             </span>
             <Link
-              href="/auth/register"
+              href="/auth/login"
               className="font-medium text-indigo-600 hover:text-indigo-700 underline"
             >
-              Sign up
+              Login
             </Link>
           </div>
         </CardContent>
-
-        <div className="pb-8 text-center text-sm text-muted-foreground">
-          Demo credentials: admin@example.com / password123
-        </div>
       </Card>
     </div>
   );
