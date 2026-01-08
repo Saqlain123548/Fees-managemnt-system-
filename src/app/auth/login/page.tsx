@@ -1,91 +1,63 @@
 "use client";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { useState } from "react";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 
 export default function LoginPage() {
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Login logic here
-    console.log("Login submitted");
-  };
+  const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -left-40 w-80 h-80 bg-indigo-200 rounded-full filter blur-3xl opacity-20"></div>
-        <div className="absolute -bottom-40 -right-40 w-80 h-80 bg-purple-200 rounded-full filter blur-3xl opacity-20"></div>
-      </div>
-
-      <Card className="w-full max-w-md z-10 shadow-xl">
-        <CardHeader className="space-y-3 text-center pb-8">
-          <CardTitle className="text-3xl font-bold">Login</CardTitle>
-          <CardDescription className="text-base">
-            Enter your credentials to access the Fees Collection System
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-cyan-50 p-4">
+      <Card className="w-full max-w-md shadow-2xl border border-gray-200">
+        <CardHeader className="space-y-3 pb-7">
+          <CardTitle className="text-2xl font-bold text-center">Sign In</CardTitle>
+          <CardDescription className="text-center text-gray-600">
+            Access your fees management dashboard
           </CardDescription>
         </CardHeader>
+        <CardContent className="space-y-5">
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input id="email" type="email" placeholder="admin@example.com" className="h-10" />
+          </div>
 
-        <CardContent className="space-y-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-base">
-                Email
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="admin@techcompany.com"
-                required
-                className="h-12 text-base"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-base">
-                Password
-              </Label>
+          {/* Password with Eye Icon */}
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <div className="relative">
               <Input
                 id="password"
-                type="password"
-                placeholder="Enter your password"
-                required
-                className="h-12 text-base"
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••••"
+                className="h-10 pr-10"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
             </div>
-
-            <Button
-              type="submit"
-              className="w-full h-12 text-base font-medium bg-indigo-600 hover:bg-indigo-700"
-            >
-              Login
-            </Button>
-          </form>
-
-          <div className="text-center text-sm">
-            <span className="text-muted-foreground">
-              Don't have an account?{" "}
-            </span>
-            <Link
-              href="/auth/register"
-              className="font-medium text-indigo-600 hover:text-indigo-700 underline"
-            >
-              Sign up
-            </Link>
           </div>
-        </CardContent>
 
-        <div className="pb-8 text-center text-sm text-muted-foreground">
-          Demo credentials: admin@example.com / password123
-        </div>
+          <Button className="w-full h-10 text-base font-medium shadow-md hover:shadow-lg transition-shadow">
+            Sign In
+          </Button>
+        </CardContent>
+        <CardFooter className="flex justify-center pt-3">
+          <p className="text-sm text-gray-600">
+            No account?{" "}
+            <Link href="/auth/register" className="font-semibold text-indigo-600 hover:text-indigo-700 underline">
+              Register here
+            </Link>
+          </p>
+        </CardFooter>
       </Card>
     </div>
   );

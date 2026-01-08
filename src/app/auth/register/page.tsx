@@ -1,113 +1,95 @@
 "use client";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { useState } from "react";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 
-export default function SignupPage() {
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Signup logic here (e.g., API call to register user)
-    console.log("Signup submitted");
-  };
+export default function RegisterPage() {
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -left-40 w-80 h-80 bg-indigo-200 rounded-full filter blur-3xl opacity-20"></div>
-        <div className="absolute -bottom-40 -right-40 w-80 h-80 bg-purple-200 rounded-full filter blur-3xl opacity-20"></div>
-      </div>
-
-      <Card className="w-full max-w-md z-10 shadow-xl">
-        <CardHeader className="space-y-3 text-center pb-8">
-          <CardTitle className="text-3xl font-bold">Sign Up</CardTitle>
-          <CardDescription className="text-base">
-            Create a new admin account for the Fees Collection System
+    <div className="min-h-60vh flex items-center justify-center bg-gradient-to-br from-purple-50 to-teal-50 p-4">
+      <Card className="w-full max-w-lg shadow-2xl border border-gray-200">
+        <CardHeader className="space-y-2 pb-6">
+          <CardTitle className="text-2xl font-bold text-center">Create Account</CardTitle>
+          <CardDescription className="text-center text-gray-600">
+            Set up your admin access
           </CardDescription>
         </CardHeader>
-
-        <CardContent className="space-y-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <CardContent className="space-y-4">
+        
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-base">
-                Full Name
-              </Label>
-              <Input
-                id="name"
-                type="text"
-                placeholder="John Doe"
-                required
-                className="h-12 text-base"
-              />
+              <Label htmlFor="firstName">First Name</Label>
+              <Input id="firstName" type="text" placeholder="John" className="h-10" />
             </div>
-
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-base">
-                Email
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="admin@techcompany.com"
-                required
-                className="h-12 text-base"
-              />
+              <Label htmlFor="lastName">Last Name</Label>
+              <Input id="lastName" type="text" placeholder="Doe" className="h-10" />
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-base">
-                Password
-              </Label>
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input id="email" type="email" placeholder="admin@example.com" className="h-10" />
+          </div>
+
+        
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <div className="relative">
               <Input
                 id="password"
-                type="password"
-                placeholder="Create a strong password"
-                required
-                className="h-12 text-base"
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••••"
+                className="h-10 pr-10"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="confirm" className="text-base">
-                Confirm Password
-              </Label>
+          <div className="space-y-2">
+            <Label htmlFor="confirm">Confirm Password</Label>
+            <div className="relative">
               <Input
                 id="confirm"
-                type="password"
-                placeholder="Repeat your password"
-                required
-                className="h-12 text-base"
+                type={showConfirm ? "text" : "password"}
+                placeholder="••••••••"
+                className="h-10 pr-10"
               />
+              <button
+                type="button"
+                onClick={() => setShowConfirm(!showConfirm)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
             </div>
-
-            <Button
-              type="submit"
-              className="w-full h-12 text-base font-medium bg-indigo-600 hover:bg-indigo-700"
-            >
-              Sign Up
-            </Button>
-          </form>
-
-          <div className="text-center text-sm">
-            <span className="text-muted-foreground">
-              Already have an account?{" "}
-            </span>
-            <Link
-              href="/auth/login"
-              className="font-medium text-indigo-600 hover:text-indigo-700 underline"
-            >
-              Login
-            </Link>
           </div>
+
+          <Button className="w-full h-10 text-base font-medium shadow-md hover:shadow-lg transition-shadow">
+            Register
+          </Button>
         </CardContent>
+        <CardFooter className="flex justify-center pt-2 pb-6">
+          <p className="text-sm text-gray-600">
+            Already registered?{" "}
+            <Link href="/auth/login" className="font-semibold text-indigo-600 hover:text-indigo-700 underline">
+              Sign in here
+            </Link>
+          </p>
+        </CardFooter>
       </Card>
     </div>
   );
