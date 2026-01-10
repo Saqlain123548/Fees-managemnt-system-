@@ -1,9 +1,5 @@
-export default function Home() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-black">
-      <h1 className="text-4xl font-bold text-green-400">
-        Tailwind is Working 🚀
-      </h1>
-    </div>
-  );
+import { redirect } from "next/navigation";
+
+export default function HomePage() {
+  redirect("auth/login");
 }
