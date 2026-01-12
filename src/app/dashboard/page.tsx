@@ -4,31 +4,66 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, DollarSign, Wallet, AlertCircle } from "lucide-react";
 import { AppNavbar } from "@/components/ui/AppNavbar";
 import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase/browser";
+
+interface DashboardStats {
+  totalStudents: number;
+  totalDue: number;
+  totalPaid: number;
+  outstanding: number;
+  monthlyData: { month: string; paid: number }[];
+  pieData: { name: string; value: number; color: string }[];
+}
 
 export default function DashboardPage() {
-  // Fake stats
-  const stats = {
-    totalStudents: 23,
-    totalDue: 580000,
-    totalPaid: 420000,
-    outstanding: 160000,
+  const [stats, setStats] = useState<DashboardStats>({
+    totalStudents: 0,
+    totalDue: 0,
+    totalPaid: 0,
+    outstanding: 0,
+    monthlyData: [],
+    pieData: [],
+  });
+  const [loading, setLoading] = useState(true);
+
+  const fetchStats = async () => {
+    try {
+      const response = await fetch('/api/dashboard');
+      if (response.ok) {
+        const data = await response.json();
+        setStats(data);
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Fake data for line chart (monthly collections)
-  const monthlyData = [
-    { month: "Jul", paid: 50000 },
-    { month: "Aug", paid: 70000 },
-    { month: "Sep", paid: 65000 },
-    { month: "Oct", paid: 80000 },
-    { month: "Nov", paid: 95000 },
-    { month: "Dec", paid: 120000 },
-  ];
+  useEffect(() => {
+    fetchStats();
 
-  // Fake data for pie chart
-  const pieData = [
-    { name: "Paid", value: stats.totalPaid, color: "#10b981" },
-    { name: "Outstanding", value: stats.outstanding, color: "#ef4444" },
-  ];
+    // Set up real-time subscriptions
+    const studentsSubscription = supabase
+      .channel('students_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'students' }, () => {
+        fetchStats();
+      })
+      .subscribe();
+
+    const feesSubscription = supabase
+      .channel('fees_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'fees_records' }, () => {
+        fetchStats();
+      })
+      .subscribe();
+
+    return () => {
+      studentsSubscription.unsubscribe();
+      feesSubscription.unsubscribe();
+    };
+  }, []);
 
   return (
     <>
@@ -90,7 +125,7 @@ export default function DashboardPage() {
             <Card className="p-6">
               <h3 className="text-lg font-semibold mb-4">Monthly Fees Collection</h3>
               <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={monthlyData}>
+                <LineChart data={stats.monthlyData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
                   <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                   <YAxis tick={{ fontSize: 12 }} />
@@ -106,7 +141,7 @@ export default function DashboardPage() {
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
-                    data={pieData}
+                    data={stats.pieData}
                     cx="50%"
                     cy="50%"
                     innerRadius={60}
@@ -114,7 +149,7 @@ export default function DashboardPage() {
                     paddingAngle={5}
                     dataKey="value"
                   >
-                    {pieData.map((entry, index) => (
+                    {stats.pieData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
@@ -126,7 +161,7 @@ export default function DashboardPage() {
           </div>
 
           <p className="text-center text-gray-600 mt-10 text-sm">
-            Smooth sailing for your tech batch! 🚀
+            Real-time dashboard updates! 🚀
           </p>
         </div>
       </div>

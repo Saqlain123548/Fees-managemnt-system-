@@ -1,0 +1,38 @@
+<parameter name="content">import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { NextRequest, NextResponse } from "next/server";
+
+// GET - Search students by name, email, or contact
+export async function GET(request: NextRequest) {
+  try {
+    const supabase = await createSupabaseServerClient(request);
+    
+    const { searchParams } = new URL(request.url);
+    const query = searchParams.get("q");
+
+    if (!query || query.trim().length < 2) {
+      return NextResponse.json([]);
+    }
+
+    const searchTerm = query.trim();
+
+    const { data, error } = await supabase
+      .from("students")
+      .select("id, first_name, last_name, email, contact")
+      .eq("is_active", true)
+      .or(
+        `first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,contact.ilike.%${searchTerm}%`
+      )
+      .limit(10);
+
+    if (error) {
+      console.error("Supabase search error:", error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json(data || []);
+  } catch (err: any) {
+    console.error("Server error:", err);
+    return NextResponse.json({ error: err.message || "Internal server error" }, { status: 500 });
+  }
+}
+</parameter>

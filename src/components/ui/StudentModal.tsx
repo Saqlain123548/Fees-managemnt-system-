@@ -82,16 +82,16 @@ export function StudentModal({ student, isOpen, onClose }: StudentModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md max-w-[95vw] max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-lg max-w-[95vw] max-h-[80vh] overflow-hidden flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <User className="h-5 w-5" />
             Student Details
           </DialogTitle>
         </DialogHeader>
 
-        {/* Student Information */}
-        <div className="space-y-3">
+        {/* Student Information - Scrollable Content */}
+        <div className="space-y-3 overflow-y-auto flex-1 pr-2">
           <div className="flex items-center gap-3 pb-2 border-b">
             <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
               <User className="h-6 w-6 text-indigo-600" />

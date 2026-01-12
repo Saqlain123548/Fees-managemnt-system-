@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -10,8 +11,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Users, DollarSign, AlertCircle, TrendingUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Users, DollarSign, AlertCircle, TrendingUp, RefreshCw, Loader2 } from "lucide-react";
 import { AppNavbar } from "@/components/ui/AppNavbar";
+import { toast } from "sonner";
+import { supabase } from "@/lib/supabase/browser";
 import {
   PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer,
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -19,62 +23,107 @@ import {
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar
 } from "recharts";
 
-// Fake data for heavy charts
-const summary = {
-  totalStudents: 23,
-  totalCollected: 420000,
-  totalOutstanding: 160000,
-};
-
-// Donut Pie Chart Data
-const pieData = [
-  { name: "Paid", value: summary.totalCollected, color: "#10b981" },
-  { name: "Outstanding", value: summary.totalOutstanding, color: "#ef4444" },
-];
-
-// Stacked Bar Chart - Student-wise Breakdown (fake top 6 students)
-const studentBarData = [
-  { name: "Ali Khan", due: 25000, paid: 25000, outstanding: 0 },
-  { name: "Sara Ahmed", due: 25000, paid: 15000, outstanding: 10000 },
-  { name: "Usman Malik", due: 25000, paid: 5000, outstanding: 20000 },
-  { name: "Ayesha S.", due: 25000, paid: 25000, outstanding: 0 },
-  { name: "Ahmed R.", due: 25000, paid: 20000, outstanding: 5000 },
-  { name: "Fatima Z.", due: 25000, paid: 18000, outstanding: 7000 },
-];
-
-// Area Chart - Monthly Trend
-const monthlyAreaData = [
-  { month: "Jul", collected: 50000 },
-  { month: "Aug", collected: 70000 },
-  { month: "Sep", collected: 65000 },
-  { month: "Oct", collected: 80000 },
-  { month: "Nov", collected: 95000 },
-  { month: "Dec", collected: 120000 },
-  { month: "Jan", collected: 85000 },
-];
-
-// Radar Chart - Performance Overview
-const radarData = [
-  { metric: "Students Enrolled", value: 92 },
-  { metric: "Fees Collected %", value: 72 },
-  { metric: "On-Time Payments", value: 85 },
-  { metric: "Outstanding Recovery", value: 60 },
-  { metric: "Monthly Growth", value: 78 },
-  { metric: "Batch Completion", value: 88 },
-];
-
-const outstandingStudents = [
-  { name: "Sara Ahmed", balance: 10000, status: "partial" },
-  { name: "Usman Malik", balance: 20000, status: "pending" },
-];
-
-const recentPayments = [
-  { date: "2026-01-08", student: "Ali Khan", amount: 5000, method: "Cash" },
-  { date: "2026-01-07", student: "Ayesha Siddiqui", amount: 25000, method: "Bank Transfer" },
-  { date: "2026-01-05", student: "Sara Ahmed", amount: 10000, method: "Cash" },
-];
+// Types
+interface ReportsData {
+  summary: {
+    totalStudents: number;
+    totalCollected: number;
+    totalOutstanding: number;
+  };
+  pieData: { name: string; value: number; color: string }[];
+  studentBarData: {
+    name: string;
+    due: number;
+    paid: number;
+    outstanding: number;
+  }[];
+  monthlyAreaData: { month: string; collected: number }[];
+  radarData: { metric: string; value: number }[];
+  outstandingStudents: {
+    name: string;
+    balance: number;
+    status: string;
+  }[];
+  recentPayments: {
+    date: string;
+    student: string;
+    amount: number;
+    method: string;
+  }[];
+}
 
 export default function ReportsPage() {
+  const [data, setData] = useState<ReportsData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch reports data
+  const fetchReportsData = useCallback(async () => {
+    try {
+      setError(null);
+      const res = await fetch("/api/reports");
+      
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Server error ${res.status}: ${text.slice(0, 200)}...`);
+      }
+      
+      const result = await res.json();
+      setData(result);
+    } catch (err: any) {
+      console.error("Fetch reports error:", err);
+      setError(err.message || "Failed to load reports data");
+      toast.error("Failed to load reports data");
+    }
+  }, []);
+
+  // Initial data fetch
+  useEffect(() => {
+    const initData = async () => {
+      setLoading(true);
+      await fetchReportsData();
+      setLoading(false);
+    };
+    initData();
+  }, [fetchReportsData]);
+
+  // Real-time subscription for reports
+  useEffect(() => {
+    const channel = supabase
+      .channel("reports-changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "fees_records",
+        },
+        (payload) => {
+          console.log("Real-time fee change received:", payload);
+          fetchReportsData();
+          toast.success("Reports data updated!");
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "students",
+        },
+        (payload) => {
+          console.log("Real-time student change received:", payload);
+          fetchReportsData();
+          toast.success("Reports data updated!");
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchReportsData]);
+
   const getStatusBadge = (status: string) => {
     return status === "paid" ? (
       <Badge className="bg-green-100 text-green-800">Paid</Badge>
@@ -85,11 +134,56 @@ export default function ReportsPage() {
     );
   };
 
+  // Handle refresh
+  const handleRefresh = async () => {
+    setLoading(true);
+    await fetchReportsData();
+    setLoading(false);
+    toast.success("Reports data refreshed");
+  };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  // Error state
+  if (error || !data) {
+    return (
+      <>
+        <AppNavbar />
+        <div className="p-8 max-w-7xl mx-auto">
+          <div className="flex flex-col items-center justify-center h-64">
+            <p className="text-red-500 mb-4">{error || "Failed to load data"}</p>
+            <Button onClick={handleRefresh} className="flex items-center gap-2">
+              <RefreshCw className="h-4 w-4" /> Retry
+            </Button>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  const { summary, pieData, studentBarData, monthlyAreaData, radarData, outstandingStudents, recentPayments } = data;
+
   return (
     <>
       <AppNavbar />
       <div className="p-8 max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-800 mb-8">Advanced Reports</h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-800">Advanced Reports</h1>
+          <Button 
+            variant="outline" 
+            onClick={handleRefresh}
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className="h-4 w-4" /> Refresh
+          </Button>
+        </div>
 
         {/* Summary Cards */}
         <div className="grid gap-6 md:grid-cols-3 mb-12">
@@ -218,15 +312,23 @@ export default function ReportsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {outstandingStudents.map((student, i) => (
-                    <TableRow key={i}>
-                      <TableCell className="font-medium">{student.name}</TableCell>
-                      <TableCell className="text-red-600 font-semibold">
-                        ₨ {student.balance.toLocaleString()}
+                  {outstandingStudents.length > 0 ? (
+                    outstandingStudents.map((student, i) => (
+                      <TableRow key={i}>
+                        <TableCell className="font-medium">{student.name}</TableCell>
+                        <TableCell className="text-red-600 font-semibold">
+                          ₨ {student.balance.toLocaleString()}
+                        </TableCell>
+                        <TableCell>{getStatusBadge(student.status)}</TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center text-gray-500 py-8">
+                        No outstanding payments
                       </TableCell>
-                      <TableCell>{getStatusBadge(student.status)}</TableCell>
                     </TableRow>
-                  ))}
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
@@ -247,13 +349,21 @@ export default function ReportsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {recentPayments.map((payment, i) => (
-                    <TableRow key={i}>
-                      <TableCell>{payment.date}</TableCell>
-                      <TableCell>{payment.student}</TableCell>
-                      <TableCell className="text-green-600">₨ {payment.amount.toLocaleString()}</TableCell>
+                  {recentPayments.length > 0 ? (
+                    recentPayments.map((payment, i) => (
+                      <TableRow key={i}>
+                        <TableCell>{payment.date}</TableCell>
+                        <TableCell>{payment.student}</TableCell>
+                        <TableCell className="text-green-600">₨ {payment.amount.toLocaleString()}</TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center text-gray-500 py-8">
+                        No recent payments
+                      </TableCell>
                     </TableRow>
-                  ))}
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
@@ -263,3 +373,4 @@ export default function ReportsPage() {
     </>
   );
 }
+
