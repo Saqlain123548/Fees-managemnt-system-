@@ -161,7 +161,7 @@ export default function DashboardPage() {
           </div>
 
           <p className="text-center text-gray-600 mt-10 text-sm">
-            Real-time dashboard updates! 🚀
+            Powerd by Agaicode Technologies &copy; {new Date().getFullYear()}
           </p>
         </div>
       </div>

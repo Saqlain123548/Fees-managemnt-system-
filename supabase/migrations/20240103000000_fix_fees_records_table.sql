@@ -1,8 +1,4 @@
--- Migration: Fix fees_records table structure
--- Date: 20240103
--- Purpose: Recreate fees_records table with correct schema and RLS policies
 
--- Drop existing table and dependent objects
 DROP TABLE IF EXISTS public.fees_records CASCADE;
 
 -- Create fees_records table with all required columns

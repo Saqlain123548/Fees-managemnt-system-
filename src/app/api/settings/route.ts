@@ -36,7 +36,7 @@ export async function POST() {
         reminder_days: ['3', '4', '5', '6', '7', '8', '9', '10'],
         email_enabled: true,
         payment_dates: '3rd-10th',
-        message_template: 'Dear {student_name}, This is a friendly reminder that your monthly fees payment is due. Please make your payment between 3rd-10th of this month. Contact us if you have any questions. Best regards, IT Center Fees Management',
+        message_template: 'Dear {student_name}, This is a friendly reminder that your monthly fees payment is due. Please make your payment between 3rd-10th of this month. Contact us if you have any questions. Best regards, Agaicode Tech Fees Management',
       })
       .select()
       .single();

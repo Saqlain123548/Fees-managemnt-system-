@@ -37,7 +37,7 @@ export const getEmailTemplate = (studentName: string, paymentDates: string = '3r
 </head>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
   <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-    <h1 style="color: white; margin: 0; font-size: 24px;">IT Center Fees Management</h1>
+    <h1 style="color: white; margin: 0; font-size: 24px;">Agaicode Tech Fees Management</h1>
   </div>
   
   <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
@@ -58,7 +58,7 @@ export const getEmailTemplate = (studentName: string, paymentDates: string = '3r
     <p style="font-size: 14px; color: #666;">
       Contact us if you have any questions.<br>
       <strong>Best regards,</strong><br>
-      IT Center Fees Management
+      Agaicode Tech Fees Management
     </p>
   </div>
   
@@ -106,7 +106,7 @@ export async function sendEmail(
     });
 
     const result = await transporter.sendMail({
-      from: `"IT Center Fees" <${smtpUser}>`,
+      from: `"Agaicode Tech Fees" <${smtpUser}>`,
       to: toEmail,
       subject: subject,
       html: htmlContent,
@@ -140,7 +140,7 @@ export async function sendPaymentReminder(
     student.email &&
     student.email.trim()
   ) {
-    const emailSubject = 'Payment Reminder - IT Center Fees';
+    const emailSubject = 'Payment Reminder - Agaicode Tech Fees';
     const emailContent = getEmailTemplate(fullName, paymentDates);
     const emailResult = await sendEmail(student.email, emailSubject, emailContent);
     

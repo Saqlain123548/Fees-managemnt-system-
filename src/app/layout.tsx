@@ -1,9 +1,20 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { Toaster } from "@/components/ui/sonner";
+
+export const viewport: Viewport = {
+  themeColor: "#ffffff",
+};
 
 export const metadata: Metadata = {
-  title: "Fees Management System",
-  description: "School fees management and payment reminder system",
+  title: "Agaicode Technoliges Fees Management",
+  description: "Agaicode technoliges fees management and payment reminder system",
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/Agaicode3.png",
+    shortcut: "/Agaicode3.png",
+    apple: "/Agaicode3.png",
+  },
 };
 
 export default function RootLayout({
@@ -15,6 +26,7 @@ export default function RootLayout({
     <html lang="en">
       <body className="antialiased">
         {children}
+        <Toaster />
       </body>
     </html>
   );

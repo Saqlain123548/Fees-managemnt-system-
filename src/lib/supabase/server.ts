@@ -1,9 +1,4 @@
-/**
- * Supabase Server Client Factory
- * 
- * IMPORTANT: This file creates Supabase server clients for API routes.
- * It handles both authenticated and anonymous access patterns.
- */
+
 
 import { createServerClient as _createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
@@ -23,10 +18,7 @@ function getEnvVars() {
   };
 }
 
-/**
- * Create a server client for use in API routes
- * Uses the standard @supabase/ssr pattern
- */
+
 export async function createSupabaseServerClient(request?: NextRequest, response?: NextResponse) {
   const { url, anonKey, isConfigured } = getEnvVars();
   
@@ -56,10 +48,7 @@ export async function createSupabaseServerClient(request?: NextRequest, response
   });
 }
 
-/**
- * Create an admin client with service role key
- * Use this for operations that bypass RLS
- */
+
 export async function createSupabaseAdminClient(request?: NextRequest) {
   const { url, serviceKey, isConfigured } = getEnvVars();
   
@@ -83,10 +72,6 @@ export async function createSupabaseAdminClient(request?: NextRequest) {
   });
 }
 
-/**
- * Create a client for use in Server Components
- * Uses cookies from the request headers
- */
 export function createServerComponentClient(request: NextRequest) {
   const { url, anonKey, isConfigured } = getEnvVars();
   

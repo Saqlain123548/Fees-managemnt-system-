@@ -17,6 +17,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -116,6 +117,10 @@ export default function FeesPage() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Delete confirmation dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [paymentToDelete, setPaymentToDelete] = useState<string | null>(null);
 
   // Filter state for Payment History
   const [selectedYear, setSelectedYear] = useState<string>("all");
@@ -350,14 +355,18 @@ export default function FeesPage() {
 
   // Handle delete payment
   const handleDeletePayment = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this payment record?")) {
-      return;
-    }
+    setPaymentToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  // Confirm delete payment
+  const handleConfirmDeletePayment = async () => {
+    if (!paymentToDelete) return;
 
     const loadingToast = toast.loading("Deleting payment...");
 
     try {
-      const res = await fetch(`/api/fees/${id}`, {
+      const res = await fetch(`/api/fees/${paymentToDelete}`, {
         method: "DELETE",
       });
 
@@ -655,6 +664,19 @@ export default function FeesPage() {
             No students found. Add students first to manage fees.
           </div>
         )}
+
+        {/* Delete Confirmation Dialog */}
+        <ConfirmationDialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          title="Delete Payment"
+          description="Are you sure you want to delete this payment record? This action cannot be undone."
+          confirmText="Delete Payment"
+          cancelText="Cancel"
+          onConfirm={handleConfirmDeletePayment}
+          variant="danger"
+          icon="warning"
+        />
       </div>
     </>
   );

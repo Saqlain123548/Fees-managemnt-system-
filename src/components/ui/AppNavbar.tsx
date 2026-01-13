@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Home, Users, DollarSign, FileText, Search, Bell, LogOut } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useState } from "react";
@@ -77,7 +78,7 @@ export function AppNavbar() {
     setIsSearching(false);
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       handleSearch();
     }
@@ -98,17 +99,22 @@ export function AppNavbar() {
     <>
       <header className="border-b bg-gradient-to-b from-white to-slate-50/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
         <div className="flex items-center justify-between px-6 lg:px-10 py-4 max-w-7xl mx-auto">
-          {/* Logo */}
+          {/* Logo with top title */}
           <Link
             href="/dashboard"
-            className="flex items-baseline gap-1.5 text-lg lg:text-xl font-bold tracking-tight hover:opacity-90 transition-opacity"
+            className="flex flex-col items-start gap-1 hover:opacity-90 transition-opacity"
           >
-            <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-500 bg-clip-text text-transparent">
-              Agaicode
-            </span>
-            <span className="text-indigo-700/90 font-medium text-base lg:text-lg">
-              Technologies
-            </span>
+            
+            {/* Navbar brand logo */}
+            <Image
+              src="/assets/Agaicode2.png"
+              alt="Agaicode Technologies"
+              width={220}
+              height={57}
+              quality={100}
+              priority
+              className="h-14 w-auto object-contain"
+            />
           </Link>
 
           {/* Navigation + Search */}
@@ -201,3 +207,4 @@ export function AppNavbar() {
     </>
   );
 }
+

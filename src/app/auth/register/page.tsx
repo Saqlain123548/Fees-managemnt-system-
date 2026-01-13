@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { registerUser } from "@/app/auth/actions";
+import { toast } from "sonner";
 
 export default function RegisterPage() {
   const [firstName, setFirstName] = useState("");
@@ -39,7 +40,7 @@ export default function RegisterPage() {
       return;
     }
 
-    alert("Account created! Check your email for verification.");
+    toast.success("Account created! Check your email for verification.");
   };
 
   return (

@@ -17,6 +17,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus, Edit, Trash2, Loader2, X } from "lucide-react";
@@ -44,6 +45,10 @@ function StudentsContent() {
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
+  
+  // Delete confirmation dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [studentToDelete, setStudentToDelete] = useState<string | null>(null);
 
   const [newStudent, setNewStudent] = useState({
     firstName: "",
@@ -237,12 +242,18 @@ function StudentsContent() {
 
   // Delete student
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this student?")) return;
+    setStudentToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  // Confirm delete student
+  const handleConfirmDelete = async () => {
+    if (!studentToDelete) return;
 
     const loadingToast = toast.loading("Deleting student...");
 
     try {
-      const res = await fetch(`/api/students/${id}`, {
+      const res = await fetch(`/api/students/${studentToDelete}`, {
         method: "DELETE",
       });
 
@@ -251,7 +262,7 @@ function StudentsContent() {
         throw new Error(data.error || "Delete failed");
       }
 
-      setStudents(students.filter((s) => s.id !== id));
+      setStudents(students.filter((s) => s.id !== studentToDelete));
       toast.success("Student deleted successfully", { id: loadingToast });
     } catch (err: any) {
       toast.error(err.message || "Failed to delete student", { id: loadingToast });
@@ -513,6 +524,19 @@ function StudentsContent() {
             No students added yet. Click "Add Student" to begin.
           </div>
         )}
+
+        {/* Delete Confirmation Dialog */}
+        <ConfirmationDialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          title="Delete Student"
+          description="Are you sure you want to delete this student? This action cannot be undone and all associated data will be permanently removed."
+          confirmText="Delete Student"
+          cancelText="Cancel"
+          onConfirm={handleConfirmDelete}
+          variant="danger"
+          icon="warning"
+        />
       </div>
     </>
   );
