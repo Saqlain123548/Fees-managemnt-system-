@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Home, Users, DollarSign, FileText, Search, Bell } from "lucide-react";
+import { Home, Users, DollarSign, FileText, Search, Bell, LogOut } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -9,6 +9,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { SearchDropdown } from "./SearchDropdown";
 import { StudentModal } from "./StudentModal";
+import { logout } from "@/app/auth/actions";
 
 interface Student {
   id: string;
@@ -82,6 +83,17 @@ export function AppNavbar() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success("Logged out successfully");
+      router.push("/auth/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Failed to logout");
+    }
+  };
+
   return (
     <>
       <header className="border-b bg-gradient-to-b from-white to-slate-50/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
@@ -89,18 +101,18 @@ export function AppNavbar() {
           {/* Logo */}
           <Link
             href="/dashboard"
-            className="flex items-baseline gap-1.5 text-2xl lg:text-3xl font-black tracking-tight hover:opacity-90 transition-opacity"
+            className="flex items-baseline gap-1.5 text-lg lg:text-xl font-bold tracking-tight hover:opacity-90 transition-opacity"
           >
             <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-500 bg-clip-text text-transparent">
               Agaicode
             </span>
-            <span className="text-indigo-700/90 font-semibold text-xl lg:text-2xl">
+            <span className="text-indigo-700/90 font-medium text-base lg:text-lg">
               Technologies
             </span>
           </Link>
 
           {/* Navigation + Search */}
-          <div className="flex items-center gap-10">
+          <div className="flex items-center gap-6">
             {/* Nav Links */}
             <nav className="hidden md:flex items-center gap-8">
               {navItems.map((item) => {
@@ -139,7 +151,7 @@ export function AppNavbar() {
             </nav>
 
             {/* Search Bar */}
-            <div className="relative hidden sm:flex items-center min-w-[240px] lg:min-w-[320px]">
+            <div className="relative hidden sm:flex items-center min-w-[180px] lg:min-w-[240px]">
               <input
                 type="text"
                 value={searchQuery}
@@ -167,11 +179,13 @@ export function AppNavbar() {
 
             {/* Logout */}
             <Button
-              variant="outline"
+              variant="default"
               size="sm"
-              className="border-slate-300 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-300 
-                         transition-all duration-300 font-medium px-6"
+              onClick={handleLogout}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm
+                         transition-all duration-300 font-medium px-5 flex items-center gap-2"
             >
+              <LogOut className="h-4 w-4" />
               Logout
             </Button>
           </div>

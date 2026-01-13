@@ -15,14 +15,15 @@ import {
   Mail,
   ExternalLink,
   Zap,
-  Smartphone
+  Calendar as CalendarIcon
 } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
 
 interface ReminderSettings {
   id: string;
   is_enabled: boolean;
   reminder_days: string[];
-  whatsapp_enabled: boolean;
   email_enabled: boolean;
   payment_dates: string;
   message_template: string;
@@ -33,7 +34,6 @@ interface ReminderLog {
   student_id: string;
   student_name?: string;
   student_email?: string;
-  student_contact?: string;
   reminder_type: string;
   status: string;
   message: string | null;
@@ -49,7 +49,6 @@ interface ReminderStats {
   reminderEnabled: boolean;
   totalStudents: number;
   unpaidStudentsCount: number;
-  whatsappEnabledCount: number;
   emailEnabledCount: number;
 }
 
@@ -89,6 +88,47 @@ export default function RemindersPage() {
       
       if (!settingsError && settingsData) {
         setSettings(settingsData as ReminderSettings);
+      } else if (settingsError?.code === 'PGRST116') {
+        // No settings found, try server-side API to create default settings (bypasses RLS)
+        try {
+          const settingsRes = await fetch('/api/settings', { method: 'POST' });
+          if (settingsRes.ok) {
+            const settingsResult = await settingsRes.json();
+            if (settingsResult.settings) {
+              setSettings(settingsResult.settings as ReminderSettings);
+            } else {
+              // Fallback: try browser client insert again
+              const { data: newSettings, error: insertError } = await supabase
+                .from('reminder_settings')
+                .insert({
+                  is_enabled: true,
+                  reminder_days: ['3', '4', '5', '6', '7', '8', '9', '10'],
+                  email_enabled: true,
+                  payment_dates: '3rd-10th',
+                  message_template: 'Dear {student_name}, This is a friendly reminder that your monthly fees payment is due. Please make your payment between 3rd-10th of this month. Contact us if you have any questions. Best regards, IT Center Fees Management',
+                })
+                .select()
+                .single();
+
+              if (!insertError && newSettings) {
+                setSettings(newSettings as ReminderSettings);
+              } else if (insertError) {
+                console.error('Error creating default settings:', insertError);
+                // Set default settings in memory so UI works
+                setSettings({
+                  id: '00000000-0000-0000-0000-000000000001',
+                  is_enabled: true,
+                  reminder_days: ['3', '4', '5', '6', '7', '8', '9', '10'],
+                  email_enabled: true,
+                  payment_dates: '3rd-10th',
+                  message_template: 'Dear {student_name}, This is a friendly reminder that your monthly fees payment is due. Please make your payment between 3rd-10th of this month.',
+                });
+              }
+            }
+          }
+        } catch (apiError) {
+          console.error('Error calling settings API:', apiError);
+        }
       }
 
       const { data: logsData, error: logsError } = await supabase
@@ -101,7 +141,7 @@ export default function RemindersPage() {
         const studentIds = [...new Set((logsData as ReminderLog[]).map((log) => log.student_id))];
         const { data: students } = await supabase
           .from('students')
-          .select('id, first_name, last_name, email, contact')
+          .select('id, first_name, last_name, email')
           .in('id', studentIds);
 
         const studentMap = new Map((students || []).map((s: any) => [s.id, s]));
@@ -112,7 +152,6 @@ export default function RemindersPage() {
             ? `${studentMap.get(log.student_id).first_name} ${studentMap.get(log.student_id).last_name}`
             : 'Unknown',
           student_email: studentMap.get(log.student_id)?.email || '',
-          student_contact: studentMap.get(log.student_id)?.contact || '',
         }));
 
         setLogs(logsWithNames);
@@ -157,7 +196,6 @@ export default function RemindersPage() {
         .update({
           is_enabled: settings.is_enabled,
           reminder_days: settings.reminder_days,
-          whatsapp_enabled: settings.whatsapp_enabled,
           email_enabled: settings.email_enabled,
           payment_dates: settings.payment_dates,
           message_template: settings.message_template,
@@ -201,7 +239,7 @@ export default function RemindersPage() {
             Payment Reminders
           </h1>
           <p className="text-muted-foreground mt-1">
-            Automated payment reminder system for students (WhatsApp + Email)
+            Automated email payment reminder system for students
           </p>
         </div>
         <button
@@ -272,19 +310,6 @@ export default function RemindersPage() {
 
           <div className="bg-card p-6 rounded-lg border">
             <div className="flex items-center gap-3">
-              <div className="p-3 bg-green-100 rounded-full">
-                <Smartphone className="w-6 h-6 text-green-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">WhatsApp Enabled</p>
-                <p className="text-2xl font-bold">{stats?.whatsappEnabledCount}</p>
-                <p className="text-sm text-muted-foreground">students</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-card p-6 rounded-lg border">
-            <div className="flex items-center gap-3">
               <div className={`p-3 rounded-full ${stats?.reminderEnabled ? 'bg-green-100' : 'bg-red-100'}`}>
                 {stats?.reminderEnabled ? (
                   <CheckCircle className="w-6 h-6 text-green-600" />
@@ -299,6 +324,19 @@ export default function RemindersPage() {
               </div>
             </div>
           </div>
+
+          <div className="bg-card p-6 rounded-lg border">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-blue-100 rounded-full">
+                <Mail className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Email Enabled</p>
+                <p className="text-2xl font-bold">{stats?.emailEnabledCount}</p>
+                <p className="text-sm text-muted-foreground">students ready</p>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -309,7 +347,7 @@ export default function RemindersPage() {
               <div>
                 <h3 className="font-semibold">Enable Automatic Reminders</h3>
                 <p className="text-sm text-muted-foreground">
-                  When enabled, reminders will be sent automatically on selected days
+                  When enabled, email reminders will be sent automatically on selected days
                 </p>
               </div>
               <button
@@ -329,86 +367,138 @@ export default function RemindersPage() {
             <div>
               <h3 className="font-semibold mb-3">Reminder Days</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Select which days of the month to send reminders (3-10 recommended)
+                Select which days of the month to send email reminders (3-10 recommended)
+                <br />
+                <span className="text-xs text-muted-foreground">
+                  Click on calendar days to select/deselect reminder days
+                </span>
               </p>
-              <div className="flex flex-wrap gap-2">
-                {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
-                  <button
-                    key={day}
-                    onClick={() => toggleDay(day)}
-                    className={`w-10 h-10 rounded-md border-2 transition-colors ${
-                      settings.reminder_days.includes(day.toString())
-                        ? 'bg-primary text-primary-foreground border-primary'
-                        : 'bg-background hover:bg-accent'
-                    }`}
-                  >
-                    {day}
-                  </button>
-                ))}
+              <div className="border rounded-lg p-4 inline-block bg-card">
+                <Calendar
+                  mode="multiple"
+                  selected={settings.reminder_days.map(day => {
+                    const currentMonth = new Date();
+                    return new Date(currentMonth.getFullYear(), currentMonth.getMonth(), parseInt(day));
+                  })}
+                  onSelect={(dates) => {
+                    if (!settings) return;
+                    const selectedDays = dates
+                      ?.map(d => d.getDate().toString())
+                      || [];
+                    setSettings({ ...settings, reminder_days: selectedDays });
+                  }}
+                  className="rounded-md"
+                  modifiersClassNames={{
+                    selected: 'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground'
+                  }}
+                />
               </div>
-            </div>
-
-            <div>
-              <label className="font-semibold mb-2 block">Payment Dates Range</label>
-              <input
-                type="text"
-                value={settings.payment_dates}
-                onChange={(e) => setSettings({ ...settings, payment_dates: e.target.value })}
-                className="w-full h-10 p-3 border rounded-md"
-                placeholder="e.g., 3rd-10th"
-              />
-              <p className="text-sm text-muted-foreground mt-1">
-                This will be sent to students in their reminders
-              </p>
+              <div className="mt-4">
+                <p className="text-sm font-medium mb-2">Selected Days:</p>
+                <div className="flex flex-wrap gap-2">
+                  {settings.reminder_days.length > 0 ? (
+                    settings.reminder_days
+                      .sort((a, b) => parseInt(a) - parseInt(b))
+                      .map(day => (
+                        <span
+                          key={day}
+                          className="px-3 py-1 bg-primary text-primary-foreground rounded-full text-sm"
+                        >
+                          Day {day}
+                        </span>
+                      ))
+                  ) : (
+                    <span className="text-muted-foreground text-sm">No days selected</span>
+                  )}
+                </div>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="border p-4 rounded-lg">
-                <div className="flex items-center gap-3 mb-4">
-                  <Smartphone className="w-5 h-5 text-green-600" />
-                  <h3 className="font-semibold">WhatsApp Notifications</h3>
-                  <button
-                    onClick={() => setSettings({ ...settings, whatsapp_enabled: !settings.whatsapp_enabled })}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ml-auto ${
-                      settings.whatsapp_enabled ? 'bg-primary' : 'bg-gray-200'
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        settings.whatsapp_enabled ? 'translate-x-6' : 'translate-x-1'
-                      }`}
-                    />
-                  </button>
+              <div>
+                <label className="font-semibold mb-2 block">Payment Start Date</label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    min="1"
+                    max="31"
+                    value={settings.payment_dates.split('-')[0]?.trim().replace(/[a-z]/gi, '') || ''}
+                    onChange={(e) => {
+                      const startDay = e.target.value;
+                      const endDay = settings.payment_dates.split('-')[1]?.trim().replace(/[a-z]/gi, '') || '10';
+                      setSettings({ ...settings, payment_dates: `${startDay}-${endDay}th` });
+                    }}
+                    className="w-full h-10 p-3 border rounded-md pr-12"
+                    placeholder="3"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                    th
+                  </span>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  Sends WhatsApp messages using Twilio Content Templates
+                <p className="text-sm text-muted-foreground mt-1">
+                  Start day for payment period
                 </p>
               </div>
-
-              <div className="border p-4 rounded-lg">
-                <div className="flex items-center gap-3 mb-4">
-                  <Mail className="w-5 h-5 text-blue-600" />
-                  <h3 className="font-semibold">Email Notifications</h3>
-                  <button
-                    onClick={() => setSettings({ ...settings, email_enabled: !settings.email_enabled })}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ml-auto ${
-                      settings.email_enabled ? 'bg-primary' : 'bg-gray-200'
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        settings.email_enabled ? 'translate-x-6' : 'translate-x-1'
-                      }`}
-                    />
-                  </button>
+              <div>
+                <label className="font-semibold mb-2 block">Payment End Date</label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    min="1"
+                    max="31"
+                    value={settings.payment_dates.split('-')[1]?.trim().replace(/[a-z]/gi, '') || ''}
+                    onChange={(e) => {
+                      const endDay = e.target.value;
+                      const startDay = settings.payment_dates.split('-')[0]?.trim().replace(/[a-z]/gi, '') || '3';
+                      setSettings({ ...settings, payment_dates: `${startDay}-${endDay}th` });
+                    }}
+                    className="w-full h-10 p-3 border rounded-md pr-12"
+                    placeholder="10"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                    th
+                  </span>
                 </div>
-                <textarea
-                  value={settings.message_template}
-                  onChange={(e) => setSettings({ ...settings, message_template: e.target.value })}
-                  className="w-full h-24 p-3 border rounded-md text-sm"
-                  placeholder="Email message template..."
-                />
+                <p className="text-sm text-muted-foreground mt-1">
+                  End day for payment period
+                </p>
               </div>
+            </div>
+
+            <div className="p-4 bg-muted/50 rounded-lg">
+              <p className="text-sm font-medium mb-2">Payment Period Preview:</p>
+              <p className="text-lg">
+                Students will be reminded to pay between{' '}
+                <span className="font-semibold text-primary">
+                  {settings.payment_dates}
+                </span>{' '}
+                of each month.
+              </p>
+            </div>
+
+            <div className="border p-4 rounded-lg">
+              <div className="flex items-center gap-3 mb-4">
+                <Mail className="w-5 h-5 text-blue-600" />
+                <h3 className="font-semibold">Email Notifications</h3>
+                <button
+                  onClick={() => setSettings({ ...settings, email_enabled: !settings.email_enabled })}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ml-auto ${
+                    settings.email_enabled ? 'bg-primary' : 'bg-gray-200'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      settings.email_enabled ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+              <textarea
+                value={settings.message_template}
+                onChange={(e) => setSettings({ ...settings, message_template: e.target.value })}
+                className="w-full h-24 p-3 border rounded-md text-sm"
+                placeholder="Email message template..."
+              />
             </div>
 
             <div className="flex justify-end">
@@ -432,7 +522,7 @@ export default function RemindersPage() {
       {activeTab === 'logs' && (
         <div className="bg-card rounded-lg border">
           <div className="p-4 border-b flex items-center justify-between">
-            <h3 className="font-semibold">Reminder History</h3>
+            <h3 className="font-semibold">Email Reminder History</h3>
             <button
               onClick={fetchData}
               className="p-2 hover:bg-accent rounded-md"
@@ -460,12 +550,8 @@ export default function RemindersPage() {
                     </td>
                     <td className="p-3">
                       <div className="flex items-center gap-2">
-                        {log.reminder_type === 'whatsapp' ? (
-                          <Smartphone className="w-4 h-4 text-green-600" />
-                        ) : (
-                          <Mail className="w-4 h-4 text-blue-600" />
-                        )}
-                        <span className="capitalize">{log.reminder_type}</span>
+                        <Mail className="w-4 h-4 text-blue-600" />
+                        <span className="capitalize">Email</span>
                       </div>
                     </td>
                     <td className="p-3">
@@ -509,13 +595,13 @@ export default function RemindersPage() {
 
       {activeTab === 'setup' && (
         <div className="space-y-6">
-          <div className="bg-gradient-to-r from-green-500 to-teal-600 text-white p-6 rounded-lg">
+          <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-6 rounded-lg">
             <div className="flex items-center gap-3 mb-2">
               <Zap className="w-6 h-6" />
-              <h2 className="text-2xl font-bold">WhatsApp + Email Payment Reminders Setup</h2>
+              <h2 className="text-2xl font-bold">Email Payment Reminders Setup</h2>
             </div>
             <p className="opacity-90">
-              Follow these steps to set up automated payment reminders via WhatsApp and Email.
+              Follow these steps to set up automated payment reminders via Email.
             </p>
           </div>
 
@@ -527,10 +613,10 @@ export default function RemindersPage() {
               <div className="flex-1">
                 <h3 className="font-semibold text-lg mb-2">Apply Database Migration</h3>
                 <p className="text-muted-foreground mb-4">
-                  Go to Supabase Dashboard → SQL Editor and run the WhatsApp migration SQL file.
+                  Go to Supabase Dashboard → SQL Editor and run the reminder system SQL file.
                 </p>
                 <p className="text-sm text-muted-foreground mb-2">
-                  File: <code className="bg-slate-100 px-2 py-1 rounded">supabase/migrations/20240107000000_whatsapp_support.sql</code>
+                  File: <code className="bg-slate-100 px-2 py-1 rounded">supabase/migrations/PAYMENT_REMINDER_COMPLETE_SETUP.sql</code>
                 </p>
                 <a
                   href="https://supabase.com/dashboard"
@@ -556,19 +642,13 @@ export default function RemindersPage() {
                   Add these to your <code className="bg-slate-100 px-2 py-1 rounded">.env.local</code> file:
                 </p>
                 <div className="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto">
-                  <pre className="text-sm whitespace-pre-wrap">{`# WhatsApp Notifications (Twilio)
-TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-TWILIO_AUTH_TOKEN=your_auth_token_here
-TWILIO_WHATSAPP_NUMBER=whatsapp:+14155238886
-TWILIO_CONTENT_SID=HXb5b62575e6e4ff6129ad7c8efe1f983e
-
-# Email Notifications (Gmail)
+                  <pre className="text-sm whitespace-pre-wrap">{`# Email Notifications (Gmail/SMTP)
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your_email@gmail.com
 SMTP_PASSWORD=xxxx xxxx xxxx xxxx
 
-# Cron Job Security
+# Cron Job Security (optional)
 SUPABASE_CRON_KEY=your_secure_random_key`}</pre>
                 </div>
               </div>
@@ -581,20 +661,17 @@ SUPABASE_CRON_KEY=your_secure_random_key`}</pre>
                 3
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-lg mb-2">Twilio WhatsApp Setup</h3>
+                <h3 className="font-semibold text-lg mb-2">Email Setup Requirements</h3>
                 <p className="text-muted-foreground mb-4">
-                  To send WhatsApp messages via Twilio, you need:
+                  For sending emails, you need:
                 </p>
                 <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
-                  <li>A Twilio Account (free trial at twilio.com)</li>
-                  <li>A Twilio WhatsApp Number (starts with +14155238886)</li>
-                  <li>A WhatsApp Content Template approved by Twilio</li>
+                  <li>A Gmail account (or any SMTP-enabled email provider)</li>
+                  <li>If using Gmail, enable 2-factor authentication and create an App Password</li>
+                  <li>Use the App Password as your SMTP_PASSWORD (not your regular password)</li>
                 </ol>
                 <p className="text-sm text-muted-foreground mt-4">
-                  <strong>Your Content Template SID:</strong> <code className="bg-slate-100 px-2 py-1 rounded">HXb5b62575e6e4ff6129ad7c8efe1f983e</code>
-                </p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Template variables: <code className="bg-slate-100 px-2 py-1 rounded">Student Name, Payment Dates</code>
+                  <strong>Note:</strong> For Gmail, go to Google Account → Security → 2-Step Verification → App Passwords
                 </p>
               </div>
             </div>
@@ -608,7 +685,7 @@ SUPABASE_CRON_KEY=your_secure_random_key`}</pre>
               <div className="flex-1">
                 <h3 className="font-semibold text-lg mb-2">Test the System</h3>
                 <p className="text-muted-foreground mb-4">
-                  Click the button below to send a test reminder to all unpaid students:
+                  Click the button below to send a test email reminder to all unpaid students:
                 </p>
                 <button
                   onClick={sendReminders}
@@ -631,7 +708,7 @@ SUPABASE_CRON_KEY=your_secure_random_key`}</pre>
               Setting Up Automated Cron Job
             </h3>
             <p className="text-yellow-700 mb-4">
-              To automatically send reminders between 3rd-10th of each month:
+              To automatically send email reminders between 3rd-10th of each month:
             </p>
             <ol className="list-decimal list-inside space-y-2 text-yellow-700">
               <li>Go to Supabase Dashboard → SQL Editor</li>

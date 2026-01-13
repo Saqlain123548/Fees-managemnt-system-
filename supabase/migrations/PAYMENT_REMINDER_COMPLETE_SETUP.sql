@@ -82,10 +82,14 @@ ALTER TABLE public.reminder_settings ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for reminder_settings
 DROP POLICY IF EXISTS "Authenticated users can view reminder settings" ON public.reminder_settings;
+DROP POLICY IF EXISTS "Authenticated users can insert reminder settings" ON public.reminder_settings;
 DROP POLICY IF EXISTS "Authenticated users can update reminder settings" ON public.reminder_settings;
 
 CREATE POLICY "Authenticated users can view reminder settings" ON public.reminder_settings
     FOR SELECT TO authenticated USING (true);
+
+CREATE POLICY "Authenticated users can insert reminder settings" ON public.reminder_settings
+    FOR INSERT TO authenticated WITH CHECK (true);
 
 CREATE POLICY "Authenticated users can update reminder settings" ON public.reminder_settings
     FOR UPDATE TO authenticated USING (true) WITH CHECK (true);

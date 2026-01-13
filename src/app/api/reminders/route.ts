@@ -1,6 +1,6 @@
 /**
  * Payment Reminders API Route
- * Handles sending payment reminders to students via WhatsApp + Email
+ * Handles sending payment reminders to students via Email
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -19,7 +19,6 @@ interface Student {
   last_name: string;
   email: string;
   contact: string | null;
-  whatsapp_notifications_enabled: boolean;
   email_notifications_enabled: boolean;
 }
 
@@ -86,8 +85,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Count students with WhatsApp and Email enabled
-    const whatsappEnabled = unpaidStudents.filter(s => s.whatsapp_notifications_enabled).length;
+    // Count students with Email enabled
     const emailEnabled = unpaidStudents.filter(s => s.email_notifications_enabled).length;
 
     return NextResponse.json({
@@ -97,7 +95,6 @@ export async function GET(request: NextRequest) {
       reminderEnabled: settings?.is_enabled ?? true,
       totalStudents: students?.length ?? 0,
       unpaidStudentsCount: unpaidStudents.length,
-      whatsappEnabledCount: whatsappEnabled,
       emailEnabledCount: emailEnabled,
     });
   } catch (err: any) {
@@ -206,18 +203,15 @@ export async function POST(request: NextRequest) {
         continue;
       }
 
-      // Check if notifications are enabled for this student (WhatsApp + Email only)
-      if (
-        !typedStudent.whatsapp_notifications_enabled &&
-        !typedStudent.email_notifications_enabled
-      ) {
+      // Check if email notifications are enabled for this student
+      if (!typedStudent.email_notifications_enabled) {
         skipped++;
         continue;
       }
 
       // Send reminder
       const studentFullName = `${typedStudent.first_name} ${typedStudent.last_name}`;
-      
+
       try {
         const reminderResults = await sendPaymentReminder(
           {
@@ -226,7 +220,6 @@ export async function POST(request: NextRequest) {
             lastName: typedStudent.last_name,
             email: typedStudent.email,
             contact: typedStudent.contact,
-            whatsappNotificationsEnabled: typedStudent.whatsapp_notifications_enabled,
             emailNotificationsEnabled: typedStudent.email_notifications_enabled,
           },
           {
@@ -236,9 +229,7 @@ export async function POST(request: NextRequest) {
 
         // Log each notification attempt
         for (const result of reminderResults) {
-          const message = result.type === 'whatsapp'
-            ? `WhatsApp reminder sent to ${typedStudent.contact || 'N/A'}`
-            : `Email reminder sent to ${typedStudent.email}`;
+          const message = `Email reminder sent to ${typedStudent.email}`;
 
           const { error: logError } = await supabase
             .from('payment_reminders')

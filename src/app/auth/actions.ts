@@ -2,6 +2,23 @@
 
 import { supabase } from "@/lib/supabase/browser";
 
+export async function logout() {
+  try {
+    // 1. Clear Supabase Auth session
+    await supabase.auth.signOut();
+
+    // 2. Clear admin session cookie via API
+    await fetch('/api/auth/admin/logout', {
+      method: 'POST',
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error('Logout error:', error);
+    return { error: 'Failed to logout' };
+  }
+}
+
 export async function registerUser(
   firstName: string,
   lastName: string,

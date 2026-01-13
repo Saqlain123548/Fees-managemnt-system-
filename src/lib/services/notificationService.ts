@@ -1,6 +1,6 @@
 /**
  * Payment Reminder Notification Service
- * Handles sending WhatsApp (via Twilio Content Templates) and Email (via Gmail/SMTP) notifications
+ * Handles sending Email notifications (via Gmail/SMTP)
  */
 
 // Types for notification
@@ -10,13 +10,12 @@ export interface Student {
   lastName: string;
   email: string;
   contact: string | null;
-  whatsappNotificationsEnabled: boolean;
   emailNotificationsEnabled: boolean;
 }
 
 export interface ReminderResult {
   success: boolean;
-  type: 'whatsapp' | 'email';
+  type: 'email';
   studentId: string;
   error?: string;
 }
@@ -72,60 +71,6 @@ export const getEmailTemplate = (studentName: string, paymentDates: string = '3r
 };
 
 /**
- * Send WhatsApp message via Twilio using Content Templates
- * 
- * Uses Twilio's Content Template format:
- * - ContentSid: The template SID (e.g., HXb5b62575e6e4ff6129ad7c8efe1f983e)
- * - ContentVariables: JSON with placeholders matching the template
- * 
- * Example from your curl:
- * --data-urlencode 'ContentSid=HXb5b62575e6e4ff6129ad7c8efe1f983e'
- * --data-urlencode 'ContentVariables={"1":"3/1","2":"7pm"}'
- */
-export async function sendWhatsApp(
-  toNumber: string,
-  templateSid: string,
-  contentVariables: { [key: string]: string }
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    // Check if Twilio credentials are configured
-    const accountSid = getEnvVar('TWILIO_ACCOUNT_SID');
-    const authToken = getEnvVar('TWILIO_AUTH_TOKEN');
-    const whatsappFrom = getEnvVar('TWILIO_WHATSAPP_NUMBER');
-
-    if (!accountSid || !authToken || !whatsappFrom) {
-      console.log('[WhatsApp] Twilio credentials not configured, logging instead');
-      console.log(`[WhatsApp] To: ${toNumber}`);
-      console.log(`[WhatsApp] TemplateSid: ${templateSid}`);
-      console.log(`[WhatsApp] ContentVariables:`, contentVariables);
-      return { success: true }; // Return success for development
-    }
-
-    // Dynamic import for Twilio (only in Node.js environment)
-    const twilio = await import('twilio');
-    const client = twilio.default(accountSid, authToken);
-
-    // Format the to number for WhatsApp
-    const formattedTo = toNumber.startsWith('whatsapp:') 
-      ? toNumber 
-      : `whatsapp:${toNumber}`;
-
-    const result = await client.messages.create({
-      from: whatsappFrom,
-      to: formattedTo,
-      contentSid: templateSid,
-      contentVariables: JSON.stringify(contentVariables),
-    });
-
-    console.log(`[WhatsApp] Sent successfully. SID: ${result.sid}`);
-    return { success: true };
-  } catch (error: any) {
-    console.error('[WhatsApp] Error sending WhatsApp:', error.message);
-    return { success: false, error: error.message };
-  }
-}
-
-/**
  * Send Email via Gmail/SMTP
  */
 export async function sendEmail(
@@ -176,7 +121,7 @@ export async function sendEmail(
 }
 
 /**
- * Send payment reminder to a student (WhatsApp + Email only)
+ * Send payment reminder to a student (Email only)
  */
 export async function sendPaymentReminder(
   student: Student,
@@ -188,34 +133,6 @@ export async function sendPaymentReminder(
   const results: ReminderResult[] = [];
   const fullName = `${student.firstName} ${student.lastName}`;
   const paymentDates = options?.paymentDates || '3rd-10th';
-
-  // Get Twilio Content Template SID from environment or use default
-  const contentSid = getEnvVar('TWILIO_CONTENT_SID') || 'HXb5b62575e6e4ff6129ad7c8efe1f983e';
-
-  // Send WhatsApp if enabled and contact number exists
-  if (
-    student.whatsappNotificationsEnabled &&
-    student.contact &&
-    student.contact.trim()
-  ) {
-    const contentVariables = {
-      '1': fullName,      // Student name (first placeholder in template)
-      '2': paymentDates,  // Payment dates (second placeholder in template)
-    };
-    
-    const whatsappResult = await sendWhatsApp(
-      student.contact,
-      contentSid,
-      contentVariables
-    );
-    
-    results.push({
-      success: whatsappResult.success,
-      type: 'whatsapp',
-      studentId: student.id,
-      error: whatsappResult.error,
-    });
-  }
 
   // Send Email if enabled and email exists
   if (
