@@ -12,10 +12,11 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Users, DollarSign, AlertCircle, TrendingUp, RefreshCw, Loader2 } from "lucide-react";
+import { Users, DollarSign, AlertCircle, TrendingUp, RefreshCw, Loader2, FileDown } from "lucide-react";
 import { AppNavbar } from "@/components/ui/AppNavbar";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase/browser";
+import { generateReportsPDF } from "@/lib/pdfUtils";
 import {
   PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer,
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -142,6 +143,23 @@ export default function ReportsPage() {
     toast.success("Reports data refreshed");
   };
 
+  // Handle PDF download
+  const handleDownloadPDF = async () => {
+    if (!data) {
+      toast.error("No data to export");
+      return;
+    }
+
+    const loadingToast = toast.loading("Generating PDF...");
+    try {
+      await generateReportsPDF(data, `reports-${new Date().toISOString().split('T')[0]}.pdf`);
+      toast.success("PDF downloaded successfully!", { id: loadingToast });
+    } catch (error) {
+      console.error("PDF generation error:", error);
+      toast.error("Failed to generate PDF", { id: loadingToast });
+    }
+  };
+
   // Loading state
   if (loading) {
     return (
@@ -176,13 +194,23 @@ export default function ReportsPage() {
       <div className="p-8 max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-800">Advanced Reports</h1>
-          <Button 
-            variant="outline" 
-            onClick={handleRefresh}
-            className="flex items-center gap-2"
-          >
-            <RefreshCw className="h-4 w-4" /> Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              onClick={handleDownloadPDF}
+              className="flex items-center gap-2"
+              disabled={!data}
+            >
+              <FileDown className="h-4 w-4" /> Download PDF
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={handleRefresh}
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className="h-4 w-4" /> Refresh
+            </Button>
+          </div>
         </div>
 
         {/* Summary Cards */}

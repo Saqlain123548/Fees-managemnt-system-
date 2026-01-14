@@ -102,7 +102,7 @@ export function AppNavbar() {
           {/* Logo with top title */}
           <Link
             href="/dashboard"
-            className="flex flex-col items-start gap-1 hover:opacity-90 transition-opacity"
+            className="flex flex-col items-start gap-1 hover:opacity-90 transition-opacity self-start mt-2 ml-2"
           >
             
             {/* Navbar brand logo */}

@@ -20,11 +20,12 @@ import {
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Edit, Trash2, Loader2, X } from "lucide-react";
+import { Plus, Edit, Trash2, Loader2, X, FileDown } from "lucide-react";
 import { AppNavbar } from "@/components/ui/AppNavbar";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase/browser";
 import { useSearchParams } from "next/navigation";
+import { generateStudentsPDF } from "@/lib/pdfUtils";
 
 type Student = {
   id: string;
@@ -304,6 +305,23 @@ function StudentsContent() {
     setSearchQuery("");
   };
 
+  // Handle PDF download
+  const handleDownloadPDF = async () => {
+    if (students.length === 0) {
+      toast.error("No students to export");
+      return;
+    }
+
+    const loadingToast = toast.loading("Generating PDF...");
+    try {
+      await generateStudentsPDF(students, `students-list-${new Date().toISOString().split('T')[0]}.pdf`);
+      toast.success("PDF downloaded successfully!", { id: loadingToast });
+    } catch (error) {
+      console.error("PDF generation error:", error);
+      toast.error("Failed to generate PDF", { id: loadingToast });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -337,6 +355,14 @@ function StudentsContent() {
                 Clear search
               </Button>
             )}
+            <Button
+              variant="outline"
+              onClick={handleDownloadPDF}
+              className="flex items-center gap-2"
+              disabled={students.length === 0}
+            >
+              <FileDown className="h-4 w-4" /> Download PDF
+            </Button>
             <Dialog open={open} onOpenChange={handleOpenChange}>
               <DialogTrigger asChild>
                 <Button className="flex items-center gap-2">
