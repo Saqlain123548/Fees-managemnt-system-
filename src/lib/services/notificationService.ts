@@ -27,6 +27,21 @@ const getEnvVar = (key: string): string => {
 
 // Message templates for Email
 export const getEmailTemplate = (studentName: string, paymentDates: string = '3rd-10th'): string => {
+  // Get the full URL from environment or use a sensible default
+  let appUrl = process.env.NEXT_PUBLIC_APP_URL 
+    ? process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')  // Remove trailing slash if present
+    : 'http://localhost:3000';
+  
+  // Determine the logo URL based on what the user configured
+  let logoUrl: string;
+  if (appUrl.includes('/assets/Agaicode2.png')) {
+    // User already included the full path in NEXT_PUBLIC_APP_URL
+    logoUrl = appUrl;
+  } else {
+    // User set just the base URL, append the image path
+    logoUrl = `${appUrl}/assets/Agaicode2.png`;
+  }
+  
   return `
 <!DOCTYPE html>
 <html>
@@ -36,8 +51,9 @@ export const getEmailTemplate = (studentName: string, paymentDates: string = '3r
   <title>Payment Reminder</title>
 </head>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-    <h1 style="color: white; margin: 0; font-size: 24px;">Agaicode Tech Fees Management</h1>
+  <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+    <img src="${logoUrl}" alt="Agaicode Tech" width="150" height="auto" style="width: 150px; height: auto; margin-bottom: 15px; display: inline-block; border: 0;">
+    <h1 style="color: white; margin: 0; font-size: 20px;">Agaicode Tech Fees Management</h1>
   </div>
   
   <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
@@ -47,7 +63,7 @@ export const getEmailTemplate = (studentName: string, paymentDates: string = '3r
     
     <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 5px; padding: 15px; margin: 20px 0;">
       <p style="margin: 0; font-size: 16px; color: #856404;">
-        <strong>⚠️ Please make your payment between ${paymentDates} of this month.</strong>
+        <strong>Please make your payment between ${paymentDates} of this month.</strong>
       </p>
     </div>
     
@@ -190,4 +206,3 @@ export function getReminderDays(): number[] {
   const reminderDays = process.env.REMINDER_DAYS || '3,4,5,6,7,8,9,10';
   return reminderDays.split(',').map(d => parseInt(d.trim()));
 }
-
