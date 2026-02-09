@@ -1,7 +1,7 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
-const DEFAULT_FEE_AMOUNT = 3000; // Fixed fee per student
+const DEFAULT_FEE_AMOUNT = 5000; // Fixed fee per student
 
 interface StudentRow {
   id: string;

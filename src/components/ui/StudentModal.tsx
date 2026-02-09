@@ -35,7 +35,7 @@ interface StudentModalProps {
   onClose: () => void;
 }
 
-const TUITION_FEE = 3000; // Fixed tuition fee
+const TUITION_FEE = 5000; // Fixed tuition fee
 
 export function StudentModal({ student, isOpen, onClose }: StudentModalProps) {
   const [feeRecords, setFeeRecords] = useState<FeeRecord[]>([]);

@@ -10,7 +10,7 @@ interface DashboardStats {
   pieData: { name: string; value: number; color: string }[];
 }
 
-const DEFAULT_FEE_AMOUNT = 3000; // Fixed fee per student
+const DEFAULT_FEE_AMOUNT = 5000; // Fixed fee per student
 
 export async function GET(request: NextRequest) {
   try {
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Calculate totals
-    // Total Due = number of students × default fee amount (3000)
+    // Total Due = number of students × default fee amount (5000)
     const totalDue = (totalStudents || 0) * DEFAULT_FEE_AMOUNT;
     
     // Total Paid = sum of all payment amounts
