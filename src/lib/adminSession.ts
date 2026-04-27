@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+
 // Environment variable names for admin credentials
 const ADMIN_EMAILS_ENV = 'NEXT_PUBLIC_ADMIN_EMAILS';
 const ADMIN_PASSWORDS_ENV = 'NEXT_PUBLIC_ADMIN_PASSWORDS';

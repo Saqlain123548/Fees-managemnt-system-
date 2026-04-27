@@ -1,6 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
-import { getAdminSession, ADMIN_SESSION_COOKIE } from '@/lib/adminSession';
+import { getAdminSession } from '@/lib/adminSession';
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -49,8 +49,9 @@ export async function middleware(request: NextRequest) {
   // Check for Supabase session
   const { data: { session } } = await supabase.auth.getSession();
 
-  // Check for admin session
-  const adminSession = getAdminSession(request);
+  // IMPORTANT: adminSession check ko await karna zaroori hai
+  // Iske liye aapki lib/adminSession mein 'jose' library use honi chahiye
+  const adminSession = await getAdminSession(request);
 
   // User is authenticated if they have either a Supabase session or admin session
   const isAuthenticated = !!session || !!adminSession;
@@ -74,7 +75,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // If already logged in (either as admin or Supabase user) and trying to access auth routes, redirect to dashboard
+  // If already logged in and trying to access auth routes, redirect to dashboard
   if (isAuthRoute && isAuthenticated) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
@@ -94,4 +95,3 @@ export const config = {
     '/((?!_next/static|_next/image|favicon.ico|public).*)',
   ],
 };
-
