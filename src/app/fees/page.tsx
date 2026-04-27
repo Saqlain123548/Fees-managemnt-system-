@@ -135,7 +135,7 @@ export default function FeesPage() {
     notes: "",
   });
 
-  const DEFAULT_FEE_AMOUNT = 5000; // Default total fee per student
+  const DEFAULT_FEE_AMOUNT = 3000; // Default total fee per student
 
   // Fetch fees records
   const fetchFeesRecords = useCallback(async () => {
@@ -442,7 +442,7 @@ export default function FeesPage() {
                     <Label>Amount (₨) *</Label>
                     <Input
                       type="number"
-                      placeholder="5000"
+                      placeholder="3000"
                       value={payment.amount}
                       onChange={(e) =>
                         setPayment({ ...payment, amount: e.target.value })

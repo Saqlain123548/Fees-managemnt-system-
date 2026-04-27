@@ -51,9 +51,9 @@ export const getEmailTemplate = (studentName: string, paymentDates: string = '3r
   <title>Payment Reminder</title>
 </head>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
-    <img src="${logoUrl}" alt="Agaicode Tech" width="150" height="auto" style="width: 150px; height: auto; margin-bottom: 15px; display: inline-block; border: 0;">
-    <h1 style="color: white; margin: 0; font-size: 20px;">Agaicode Tech Fees Management</h1>
+ <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; ...">
+    <img src="${logoUrl}" alt="Agaicode Tech" width="150" style="width:150px; height:auto; display:block; margin:0 auto 15px;">
+    <h1 ...>Agaicode Tech Fees Management</h1>
   </div>
   
   <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">

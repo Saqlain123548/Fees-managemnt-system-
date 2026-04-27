@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Home, Users, DollarSign, FileText, Search, Bell, LogOut } from "lucide-react";
+import { Home, Users, DollarSign, FileText, Search, Bell, LogOut, Receipt } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
@@ -36,6 +36,7 @@ export function AppNavbar() {
     { name: "Dashboard", href: "/dashboard", icon: Home },
     { name: "Students", href: "/students", icon: Users },
     { name: "Fees", href: "/fees", icon: DollarSign },
+    { name: "Expenses", href: "/expenses", icon: Receipt },
     { name: "Reminders", href: "/reminders", icon: Bell },
     { name: "Reports", href: "/reports", icon: FileText },
   ];
@@ -98,22 +99,20 @@ export function AppNavbar() {
   return (
     <>
       <header className="border-b bg-gradient-to-b from-white to-slate-50/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
-        <div className="flex items-center justify-between px-6 lg:px-10 py-4 max-w-7xl mx-auto">
-          {/* Logo with top title */}
+        <div className="flex items-center justify-between px-6 lg:px-10 py-3 max-w-7xl mx-auto">
+          {/* Logo */}
           <Link
             href="/dashboard"
-            className="flex flex-col items-start gap-1 hover:opacity-90 transition-opacity self-start mt-2 ml-2"
+            className="flex items-center self-start hover:opacity-90 transition-opacity flex-shrink-0 mr-8 lg:mr-12"
           >
-            
-            {/* Navbar brand logo */}
             <Image
               src="/assets/Agaicode2.png"
               alt="Agaicode Technologies"
-              width={220}
-              height={57}
+              width={320}
+              height={83}
               quality={100}
               priority
-              className="h-14 w-auto object-contain"
+              className="h-10 w-auto object-contain"
             />
           </Link>
 
@@ -129,19 +128,11 @@ export function AppNavbar() {
                   <Link
                     key={item.name}
                     href={item.href}
-                    className={`
-                      relative flex items-center gap-2.5 text-[15px] font-medium transition-all duration-300
-                      ${
-                        active
-                          ? "text-indigo-700 font-semibold"
-                          : "text-slate-700 hover:text-indigo-600"
-                      }
-                    `}
+                    className={`flex items-center gap-2 text-sm font-medium transition-colors relative ${active ? "text-indigo-600" : "text-slate-600 hover:text-indigo-600"}`}
                   >
                     <Icon className="h-4.5 w-4.5" />
                     <span>{item.name}</span>
 
-                    {/* Active underline */}
                     {active && (
                       <motion.div
                         layoutId="activeNavLine"
@@ -188,8 +179,7 @@ export function AppNavbar() {
               variant="default"
               size="sm"
               onClick={handleLogout}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm
-                         transition-all duration-300 font-medium px-5 flex items-center gap-2"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition-all duration-300 font-medium px-5 flex items-center gap-2"
             >
               <LogOut className="h-4 w-4" />
               Logout
@@ -198,7 +188,6 @@ export function AppNavbar() {
         </div>
       </header>
 
-      {/* Student Modal */}
       <StudentModal
         isOpen={isModalOpen}
         onClose={handleModalClose}
@@ -207,4 +196,3 @@ export function AppNavbar() {
     </>
   );
 }
-
