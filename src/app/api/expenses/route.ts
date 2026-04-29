@@ -7,6 +7,7 @@ interface ExpenseRow {
   type: string;
   description: string | null;
   amount: number;
+  status: string;
   is_active: boolean;
   created_at: string;
   updated_at?: string;
@@ -18,6 +19,7 @@ interface ExpenseResponse {
   type: string;
   description: string;
   amount: number;
+  status: string;
   isActive: boolean;
   createdAt: string;
 }
@@ -28,17 +30,19 @@ const transformExpense = (row: ExpenseRow): ExpenseResponse => ({
   type: row.type || "",
   description: row.description || "",
   amount: row.amount || 0,
+  status: row.status || "Pending",
   isActive: row.is_active ?? true,
   createdAt: row.created_at || "",
 });
 
-// GET - Fetch all active expenses, optionally filtered by type or date range
+// GET - Fetch all active expenses, optionally filtered by type, status, or date range
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createSupabaseServerClient(request);
 
     const { searchParams } = new URL(request.url);
     const type = searchParams.get("type");
+    const status = searchParams.get("status");
     const year = searchParams.get("year");
     const month = searchParams.get("month");
 
@@ -49,6 +53,10 @@ export async function GET(request: NextRequest) {
 
     if (type && type !== "all") {
       query = query.eq("type", type);
+    }
+
+    if (status && status !== "all") {
+      query = query.eq("status", status);
     }
 
     if (year) {
@@ -82,7 +90,7 @@ export async function POST(request: NextRequest) {
     const supabase = await createSupabaseServerClient(request);
 
     const body = await request.json();
-    const { expenseDate, type, description, amount } = body;
+    const { expenseDate, type, description, amount, status } = body;
 
     if (!type || amount === undefined || amount === null) {
       return NextResponse.json(
@@ -106,6 +114,7 @@ export async function POST(request: NextRequest) {
         type: type.trim(),
         description: description?.trim() || null,
         amount: parsedAmount,
+        status: status || "Pending",
       })
       .select()
       .single();
@@ -122,4 +131,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: err.message || "Internal server error" }, { status: 500 });
   }
 }
-

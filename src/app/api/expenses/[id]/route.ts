@@ -7,6 +7,7 @@ interface ExpenseRow {
   type: string;
   description: string | null;
   amount: number;
+  status: string;
   is_active: boolean;
   created_at: string;
   updated_at?: string;
@@ -18,6 +19,7 @@ interface ExpenseResponse {
   type: string;
   description: string;
   amount: number;
+  status: string;
   isActive: boolean;
   createdAt: string;
 }
@@ -28,6 +30,7 @@ const transformExpense = (row: ExpenseRow): ExpenseResponse => ({
   type: row.type || "",
   description: row.description || "",
   amount: row.amount || 0,
+  status: row.status || "Pending",
   isActive: row.is_active ?? true,
   createdAt: row.created_at || "",
 });
@@ -49,7 +52,7 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { expenseDate, type, description, amount } = body;
+    const { expenseDate, type, description, amount, status } = body;
 
     if (!type || amount === undefined || amount === null) {
       return NextResponse.json(
@@ -66,14 +69,20 @@ export async function PUT(
       );
     }
 
+    const updateData: Record<string, any> = {
+      expense_date: expenseDate || null,
+      type: type.trim(),
+      description: description?.trim() || null,
+      amount: parsedAmount,
+    };
+
+    if (status) {
+      updateData.status = status;
+    }
+
     const { data, error } = await supabase
       .from("company_expenses")
-      .update({
-        expense_date: expenseDate || null,
-        type: type.trim(),
-        description: description?.trim() || null,
-        amount: parsedAmount,
-      })
+      .update(updateData)
       .eq("id", id)
       .select()
       .single();
@@ -123,4 +132,3 @@ export async function DELETE(
     return NextResponse.json({ error: err.message || "Internal server error" }, { status: 500 });
   }
 }
-
